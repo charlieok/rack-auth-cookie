@@ -1,0 +1,7 @@
+CHANGES
+MANIFEST
+README
+Rakefile
+rack-auth-cookie.gemspec
+lib/rack/auth/cookie.rb
+test/test_rack_cookie.rb
