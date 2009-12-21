@@ -102,11 +102,22 @@ module Rack
           end
         end
         
-        # If the application isn't making any changes to the cookie, we can mess with it
+        # If the application isn't making any changes to the cookie, we can modify it
         if cookie_value_from_request && !response_cookie
-          cookie = self.class.create_auth_cookie(env)
           
-          headers["Set-Cookie"] << cookie
+          # If authentication succeeded earlier, send back a new token
+          if env['AUTH_USER']
+            cookie = self.class.create_auth_cookie(env)
+            
+            headers["Set-Cookie"] << cookie
+          end
+          
+          # If authentication failed earlier, tell the client to clear the cookie
+          if env['AUTH_FAIL']
+            cookie = self.class.create_clear_cookie(env)
+            
+            headers["Set-Cookie"] << cookie
+          end
         end
         
         [status, headers, body]
@@ -167,6 +178,15 @@ module Rack
         cookie = "#{@@cookie_name}=#{URI.escape(cookie_value)}; "
         cookie += "domain=.#{top_level_domain(env)}; "
         cookie += "path=/; "
+        cookie += "HttpOnly; "
+      end
+      
+      def self.create_clear_cookie(env)
+        cookie_value = ""
+        cookie = "#{@@cookie_name}=; "
+        cookie += "domain=.#{top_level_domain(env)}; "
+        cookie += "path=/; "
+        cookie += "expires=Thu, 01-Jan-1970 00:00:00 GMT; "
         cookie += "HttpOnly; "
       end
       
