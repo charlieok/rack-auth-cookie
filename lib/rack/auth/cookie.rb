@@ -143,8 +143,8 @@ module Rack
         auth_info['AUTH_TYPE_USER'] = env['AUTH_TYPE_USER'] || env['AUTH_USER']
         
         auth_info['AUTH_DATETIME'] = env['AUTH_DATETIME'] || Time.now.utc
-        auth_info['AUTH_EXPIRE_DATETIME'] = env['AUTH_EXPIRE_DATETIME'] ||
-          env['AUTH_DATETIME'] + @@idle_timeout
+        
+        auth_info['AUTH_EXPIRE_DATETIME'] = Time.now.utc + @@idle_timeout
         
         # Pack the auth_info hash for cookie storage
         cookie_data = Marshal.dump(auth_info)
