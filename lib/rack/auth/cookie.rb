@@ -74,8 +74,8 @@ module Rack
           
           env['AUTH_TYPE_THIS_REQUEST'] = "Cookie"
           
-          env['AUTH_DATETIME'] = hash_data['AUTH_DATETIME']
-          env['AUTH_EXPIRE_DATETIME'] = hash_data['AUTH_EXPIRE_DATETIME']
+          env['AUTH_DATETIME'] = Time.at(hash_data['AUTH_DATETIME']).utc
+          env['AUTH_EXPIRE_DATETIME'] = Time.at(hash_data['AUTH_EXPIRE_DATETIME']).utc
         end
         
         finish(@app, env, cookie_value)
@@ -142,9 +142,14 @@ module Rack
         auth_info['AUTH_TYPE'] = env['AUTH_TYPE'] || "Unknown"
         auth_info['AUTH_TYPE_USER'] = env['AUTH_TYPE_USER'] || env['AUTH_USER']
         
-        auth_info['AUTH_DATETIME'] = env['AUTH_DATETIME'] || Time.now.utc
+        # Expecting env['AUTH_DATETIME'] to hold an instance of Time
+        if env['AUTH_DATETIME']
+          auth_info['AUTH_DATETIME'] = env['AUTH_DATETIME'].to_i
+        else
+          auth_info['AUTH_DATETIME'] = Time.now.utc.to_i
+        end
         
-        auth_info['AUTH_EXPIRE_DATETIME'] = Time.now.utc + @@idle_timeout
+        auth_info['AUTH_EXPIRE_DATETIME'] = Time.now.utc.to_i + @@idle_timeout
         
         # Pack the auth_info hash for cookie storage
         cookie_data = Marshal.dump(auth_info)
