@@ -55,11 +55,14 @@ module Rack
           return finish(@app, env, cookie_value)
         end
         
-        if hash_data["AUTH_EXPIRE_DATETIME"] < Time.now.utc
+        auth_datetime = Time.at(hash_data['AUTH_DATETIME']).utc
+        auth_expire_datetime = Time.at(hash_data['AUTH_EXPIRE_DATETIME']).utc
+        
+        if auth_expire_datetime < Time.now.utc
           auth_fail = "Timed out due to inactivity"
         end
         
-        if hash_data["AUTH_DATETIME"] + @@max_lifetime < Time.now.utc
+        if auth_datetime + @@max_lifetime < Time.now.utc
           auth_fail = "Maximum session length exceeded"
         end
         
@@ -74,8 +77,8 @@ module Rack
           
           env['AUTH_TYPE_THIS_REQUEST'] = "Cookie"
           
-          env['AUTH_DATETIME'] = Time.at(hash_data['AUTH_DATETIME']).utc
-          env['AUTH_EXPIRE_DATETIME'] = Time.at(hash_data['AUTH_EXPIRE_DATETIME']).utc
+          env['AUTH_DATETIME'] = auth_datetime
+          env['AUTH_EXPIRE_DATETIME'] = auth_expire_datetime
         end
         
         finish(@app, env, cookie_value)
