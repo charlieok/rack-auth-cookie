@@ -2,7 +2,7 @@ require 'rubygems'
 
 Gem::Specification.new do |gem|
   gem.name      = 'rack-auth-cookie'
-  gem.version   = '0.3.0'
+  gem.version   = '0.4.0'
   gem.authors   = ["Daniel Berger", "Charlie O'Keefe"]
   gem.email     = 'cokeefe@globe.gov'
   gem.homepage  = 'http://www.github.com/charlieok/rack-auth-cookie'
