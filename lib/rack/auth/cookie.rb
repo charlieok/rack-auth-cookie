@@ -1,3 +1,4 @@
+require 'json'
 require 'openssl'
 require 'rack/request'
 
@@ -55,15 +56,17 @@ module Rack
           return finish(@app, env, cookie_value)
         end
         
-        auth_datetime = Time.at(hash_data['AUTH_DATETIME']).utc
-        auth_expire_datetime = Time.at(hash_data['AUTH_EXPIRE_DATETIME']).utc
-        
-        if auth_expire_datetime < Time.now.utc
-          auth_fail = "Timed out due to inactivity"
-        end
-        
-        if auth_datetime + @@max_lifetime < Time.now.utc
-          auth_fail = "Maximum session length exceeded"
+        if !auth_fail
+          auth_datetime = Time.at(hash_data['AUTH_DATETIME']).utc
+          auth_expire_datetime = Time.at(hash_data['AUTH_EXPIRE_DATETIME']).utc
+          
+          if auth_expire_datetime < Time.now.utc
+            auth_fail = "Timed out due to inactivity"
+          end
+          
+          if auth_datetime + @@max_lifetime < Time.now.utc
+            auth_fail = "Maximum session length exceeded"
+          end
         end
         
         if auth_fail
@@ -135,7 +138,7 @@ module Rack
         # Unpack the cookie data back to a hash
         begin
           unpacked_data = raw_data.unpack("m*").first
-          hash_data = Marshal.load(unpacked_data)
+          hash_data = JSON.parse(unpacked_data)
         rescue
           raise "Unable to read cookie!"
         end
@@ -166,11 +169,11 @@ module Rack
         auth_info['AUTH_EXPIRE_DATETIME'] = Time.now.utc.to_i + @@idle_timeout
         
         # Pack the auth_info hash for cookie storage
-        cookie_data = Marshal.dump(auth_info)
-        cookie_data = [cookie_data].pack("m*")
+        json_data = auth_info.to_json
+        packed_data = [json_data].pack('m*')
         
         # Add a digest value to cookie_data to prevent tampering
-        "#{cookie_data}--#{generate_hmac(cookie_data)}"
+        "#{packed_data}--#{generate_hmac(packed_data)}"
       end
       
       def self.create_auth_cookie(env)
