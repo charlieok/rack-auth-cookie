@@ -8,6 +8,10 @@ class TC_Rack_Auth_Cookie < Test::Unit::TestCase
     @rack = Rack::Auth::Cookie.new(@app)
   end
 
+  def test_version
+    assert_equal('0.7.0', Rack::Auth::Cookie::VERSION)
+  end
+
   def test_constructor_basic
     assert_nothing_raised{ Rack::Auth::Cookie.new(@app) }
   end
