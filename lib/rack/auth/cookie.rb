@@ -6,7 +6,7 @@ module Rack
   module Auth
     class Cookie
       # The version of the rack-auth-cookie library.
-      VERSION = '0.7.0'
+      VERSION = '0.7.1'
 
       # Creates a new Rack::Auth::Cookie object. The +cookie_name+ param gives the
       # name of the cookie used to authenticate the requestor. The default is
@@ -63,12 +63,12 @@ module Rack
           auth_datetime = Time.at(hash_data['AUTH_DATETIME']).utc
           auth_expire_datetime = Time.at(hash_data['AUTH_EXPIRE_DATETIME']).utc
           
-          if auth_expire_datetime < Time.now.utc
-            auth_fail = "Timed out due to inactivity"
+          if auth_datetime + @@max_lifetime < Time.now.utc
+            auth_fail = "You have been signed out since you signed in more than #{@@max_lifetime/3600} hours ago"
           end
           
-          if auth_datetime + @@max_lifetime < Time.now.utc
-            auth_fail = "Maximum session length exceeded"
+          if auth_expire_datetime < Time.now.utc
+            auth_fail = "You have been signed out due to inactivity"
           end
         end
         
