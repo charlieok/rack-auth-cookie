@@ -150,6 +150,19 @@ module Rack
         hash_data
       end
       
+      def raw_host_with_port(env)
+        if forwarded = env["HTTP_X_FORWARDED_HOST"]
+          forwarded.split(/,\s?/).last
+        else
+          env['HTTP_HOST'] || "#{env['SERVER_NAME'] ||
+          env['SERVER_ADDR']}:#{env['SERVER_PORT']}"
+        end
+      end
+
+      def host(env)
+        raw_host_with_port(env).sub(/:\d+$/, '')
+      end
+      
       def self.cookie_name
         @@cookie_name
       end
@@ -199,19 +212,6 @@ module Rack
       
       def self.generate_hmac(data)
         OpenSSL::HMAC.hexdigest(OpenSSL::Digest::SHA1.new, @@secret, data)
-      end
-      
-      def raw_host_with_port(env)
-        if forwarded = env["HTTP_X_FORWARDED_HOST"]
-          forwarded.split(/,\s?/).last
-        else
-          env['HTTP_HOST'] || "#{env['SERVER_NAME'] ||
-          env['SERVER_ADDR']}:#{env['SERVER_PORT']}"
-        end
-      end
-
-      def host(env)
-        raw_host_with_port(env).sub(/:\d+$/, '')
       end
     end
   end
