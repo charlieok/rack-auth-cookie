@@ -16,7 +16,7 @@ module Rack
         @app = app
         @@secret = options[:secret]
         @@cookie_name = options[:cookie_name] || "auth_token"
-        @@cookie_domain = options[:cookie_domain] || host(ENV)
+        @@cookie_domain = options[:cookie_domain] || nil
         @@idle_timeout = options[:idle_timeout] || 3600
         @@max_lifetime = options[:max_lifetime] || 36000
         @@env = {}
@@ -150,19 +150,6 @@ module Rack
         hash_data
       end
       
-      def raw_host_with_port(env)
-        if forwarded = env["HTTP_X_FORWARDED_HOST"]
-          forwarded.split(/,\s?/).last
-        else
-          env['HTTP_HOST'] || "#{env['SERVER_NAME'] ||
-          env['SERVER_ADDR']}:#{env['SERVER_PORT']}"
-        end
-      end
-
-      def host(env)
-        raw_host_with_port(env).sub(/:\d+$/, '')
-      end
-      
       def self.cookie_name
         @@cookie_name
       end
@@ -196,7 +183,7 @@ module Rack
       def self.create_auth_cookie(env)
         cookie_value = create_auth_token(env)
         cookie = "#{@@cookie_name}=#{URI.escape(cookie_value)}; "
-        cookie += "domain=.#{@@cookie_domain}; "
+        cookie += "domain=.#{@@cookie_domain}; " if @@cookie_domain
         cookie += "path=/; "
         cookie += "HttpOnly; "
       end
@@ -204,7 +191,7 @@ module Rack
       def self.create_clear_cookie(env)
         cookie_value = ""
         cookie = "#{@@cookie_name}=; "
-        cookie += "domain=.#{@@cookie_domain}; "
+        cookie += "domain=.#{@@cookie_domain}; " if @@cookie_domain
         cookie += "path=/; "
         cookie += "expires=Thu, 01-Jan-1970 00:00:00 GMT; "
         cookie += "HttpOnly; "
