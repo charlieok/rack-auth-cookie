@@ -6,11 +6,18 @@ module Rack
   module Auth
     class Cookie
       # The version of the rack-auth-cookie library.
-      VERSION = '0.7.1'
+      VERSION = '0.7.2'
 
-      # Creates a new Rack::Auth::Cookie object. The +cookie_name+ param gives the
+      # Creates a new Rack::Auth::Cookie object.
+      #
+      # The +cookie_name+ param gives the
       # name of the cookie used to authenticate the requestor. The default is
       # 'auth_token'.
+      #
+      # The +cookie_domain+ param gives a domain name to use for the cookie.
+      # If unspecified, cookies will be set without specifying a domain.
+      # Per RFC 2965, this should cause user agents to default to the effective
+      # request-host.
       #
       def initialize(app, options = {})
         @app = app
