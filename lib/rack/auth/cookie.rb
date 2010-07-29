@@ -6,7 +6,7 @@ module Rack
   module Auth
     class Cookie
       # The version of the rack-auth-cookie library.
-      VERSION = '0.7.3'
+      VERSION = '0.7.4'
 
       # Creates a new Rack::Auth::Cookie object.
       #
