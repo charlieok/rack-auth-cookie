@@ -243,7 +243,7 @@ module Rack
         end
         
         if @@share_with_subdomains
-          result += "."
+          result = "." + result
         end
         
         result
