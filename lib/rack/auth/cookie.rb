@@ -14,16 +14,28 @@ module Rack
       # name of the cookie used to authenticate the requestor. The default is
       # 'auth_token'.
       #
-      # The +cookie_domain+ param gives a domain name to use for the cookie.
-      # If unspecified, cookies will be set without specifying a domain.
-      # Per RFC 2965, this should cause user agents to default to the effective
-      # request-host.
+      # The +domain_tree_depth+ param is useful for associating a cookie with
+      # an ancestor of the domain where an application is currently hosted. The
+      # value indicates the number of domain components to strip off the left side
+      # of the fully qualified domain associated with each request when determining
+      # the domain to use for the cookie.
+      #
+      # The +share_cookie_with_subdomains+ param will result in a "." appended to
+      # the left side of the domain value sent in Set-Cookie response headers. Per
+      # RFC 2965, this should cause user agents to include the cookie in requests
+      # not only to the associated domain but also to all its subdomains.
+      #
+      # For instance, if an application is hosted at "blog.example.com", setting
+      # domain_tree_depth to 1 and share_cookie_with_subdomains to true will result
+      # in a domain value of ".example.com" in Set-Cookie headers, meaning "use a
+      # cookie that will be visible to example.com and all subdomains of example.com"
       #
       def initialize(app, options = {})
         @app = app
         @@secret = options[:secret]
         @@cookie_name = options[:cookie_name] || "auth_token"
-        @@cookie_domain = options[:cookie_domain] || nil
+        @@domain_tree_depth = options[:domain_tree_depth] || nil
+        @@share_with_subdomains = options[:share_with_subdomains] || false
         @@idle_timeout = options[:idle_timeout] || 3600
         @@max_lifetime = options[:max_lifetime] || 36000
         @@env = {}
@@ -190,7 +202,7 @@ module Rack
       def self.create_auth_cookie(env)
         cookie_value = create_auth_token(env)
         cookie = "#{@@cookie_name}=#{URI.escape(cookie_value)}; "
-        cookie += "domain=.#{@@cookie_domain}; " if @@cookie_domain
+        cookie += "domain=.#{top_level_domain(env)}; " if @@cookie_domain
         cookie += "path=/; "
         cookie += "HttpOnly; "
       end
@@ -198,7 +210,7 @@ module Rack
       def self.create_clear_cookie(env)
         cookie_value = ""
         cookie = "#{@@cookie_name}=; "
-        cookie += "domain=.#{@@cookie_domain}; " if @@cookie_domain
+        cookie += "domain=.#{top_level_domain(env)}; " if @@cookie_domain
         cookie += "path=/; "
         cookie += "expires=Thu, 01-Jan-1970 00:00:00 GMT; "
         cookie += "HttpOnly; "
@@ -206,6 +218,25 @@ module Rack
       
       def self.generate_hmac(data)
         OpenSSL::HMAC.hexdigest(OpenSSL::Digest::SHA1.new, @@secret, data)
+      end
+      
+      def self.raw_host_with_port(env)
+        if forwarded = env["HTTP_X_FORWARDED_HOST"]
+          forwarded.split(/,\s?/).last
+        else
+          env['HTTP_HOST'] ||
+            "#{env['SERVER_NAME'] || env['SERVER_ADDR']}:#{env['SERVER_PORT']}"
+        end
+      end
+      
+      def self.host(env)
+        raw_host_with_port(env).sub(/:\d+$/, '')
+      end
+      
+      def self.top_level_domain(env)
+        components = host(env).split('.')
+        components.slice!(0, @@domain_tree_depth)
+        components.join('.')
       end
     end
   end
