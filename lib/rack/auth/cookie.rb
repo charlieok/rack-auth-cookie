@@ -202,7 +202,7 @@ module Rack
       def self.create_auth_cookie(env)
         cookie_value = create_auth_token(env)
         cookie = "#{@@cookie_name}=#{URI.escape(cookie_value)}; "
-        cookie += "domain=.#{top_level_domain(env)}; " if @@cookie_domain
+        cookie += "domain=#{cookie_domain(env)}; "
         cookie += "path=/; "
         cookie += "HttpOnly; "
       end
@@ -210,7 +210,7 @@ module Rack
       def self.create_clear_cookie(env)
         cookie_value = ""
         cookie = "#{@@cookie_name}=; "
-        cookie += "domain=.#{top_level_domain(env)}; " if @@cookie_domain
+        cookie += "domain=#{cookie_domain(env)}; "
         cookie += "path=/; "
         cookie += "expires=Thu, 01-Jan-1970 00:00:00 GMT; "
         cookie += "HttpOnly; "
@@ -233,10 +233,20 @@ module Rack
         raw_host_with_port(env).sub(/:\d+$/, '')
       end
       
-      def self.top_level_domain(env)
-        components = host(env).split('.')
-        components.slice!(0, @@domain_tree_depth)
-        components.join('.')
+      def self.cookie_domain(env)
+        result = host(env)
+        
+        if @@domain_tree_depth != nil
+          components = result.split('.')
+          components.slice!(0, @@domain_tree_depth)
+          result = components.join('.')
+        end
+        
+        if @@share_with_subdomains
+          result += "."
+        end
+        
+        result
       end
     end
   end
