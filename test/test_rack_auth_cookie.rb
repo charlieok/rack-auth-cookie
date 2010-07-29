@@ -9,7 +9,7 @@ class TC_Rack_Auth_Cookie < Test::Unit::TestCase
   end
 
   def test_version
-    assert_equal('0.7.2', Rack::Auth::Cookie::VERSION)
+    assert_equal('0.7.3', Rack::Auth::Cookie::VERSION)
   end
 
   def test_constructor_basic
