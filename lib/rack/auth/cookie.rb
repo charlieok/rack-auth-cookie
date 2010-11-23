@@ -135,14 +135,22 @@ module Rack
           if env['AUTH_USER']
             cookie = self.class.create_auth_cookie(env)
             
-            headers["Set-Cookie"] << cookie
+            if headers["Set-Cookie"]
+              headers["Set-Cookie"] << cookie
+            else
+              headers["Set-Cookie"] = cookie
+            end
           end
           
           # If authentication failed earlier, tell the client to clear the cookie
           if env['AUTH_FAIL']
             cookie = self.class.create_clear_cookie(env)
             
-            headers["Set-Cookie"] << cookie
+            if headers["Set-Cookie"]
+              headers["Set-Cookie"] << cookie
+            else
+              headers["Set-Cookie"] = cookie
+            end
           end
         end
         
