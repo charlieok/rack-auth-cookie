@@ -1,25 +1,22 @@
 require 'rake'
+require 'rake/clean'
 require 'rake/testtask'
 require 'rbconfig'
+
+CLEAN.include("**/*.gem", "**/*.rbc")
  
-desc 'Install the rack-auth-cookie library (non-gem)'
-task :install do
-  dir = File.join(CONFIG['sitelibdir'], 'rack', 'auth')
-  FileUtils.mkdir_p(dir) unless File.exists?(dir)
-  file = 'lib/rack/auth/cookie.rb'
-  FileUtils.cp_r(file, dir, :verbose => true)
-end
- 
-desc 'Build the gem'
-task :gem do
-  spec = eval(IO.read('rack-auth-cookie.gemspec'))
-  Gem::Builder.new(spec).build
-end
- 
-desc 'Install the rack-auth-cookie library as a gem'
-task :install_gem => [:gem] do
-   file = Dir["*.gem"].first
-   sh "gem install #{file}"
+namespace :gem do
+  desc 'Create the rack-auth-cookie the gem'
+  task :create do
+    spec = eval(IO.read('rack-auth-cookie.gemspec'))
+    Gem::Builder.new(spec).build
+  end
+   
+  desc 'Install the rack-auth-cookie gem'
+  task :install => [:create] do
+    file = Dir["*.gem"].first
+    sh "gem install #{file}"
+  end
 end
  
 desc 'Export the git archive to a .zip, .gz and .bz2 file in your home directory'
@@ -49,6 +46,8 @@ task :export, :output_file do |t, args|
 end
  
 Rake::TestTask.new do |t|
-   t.verbose = true
-   t.warning = true
+  t.verbose = true
+  t.warning = true
 end
+
+task :default => :test
