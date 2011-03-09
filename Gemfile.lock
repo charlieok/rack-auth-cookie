@@ -10,9 +10,11 @@ GEM
   specs:
     json (1.5.1)
     rack (1.2.1)
+    test-unit (2.2.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   rack-auth-cookie!
+  test-unit

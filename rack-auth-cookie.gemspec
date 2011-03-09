@@ -16,6 +16,8 @@ Gem::Specification.new do |gem|
   gem.add_dependency('rack', '>= 1.0.0')
   gem.add_dependency('json')
 
+  gem.add_development_dependency('test-unit')
+
   gem.description = <<-EOF
     The rack-auth-cookie library provides a Rack middleware interface for
     authenticating users using a cookie
