@@ -10,8 +10,8 @@ class TestRackAuthCookie < Test::Unit::TestCase
     @rack = Rack::Auth::Cookie.new(@app)
   end
 
-  def test_version
-    assert_equal('0.7.6', Rack::Auth::Cookie::VERSION)
+  test "version constant should exist" do
+    assert_not_nil Rack::Auth::Cookie::VERSION
   end
 
   test "constructor basic" do
