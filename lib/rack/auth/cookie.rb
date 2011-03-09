@@ -58,12 +58,12 @@ module Rack
       def call(env)
         request = Rack::Request.new(env)
         auth_fail = false
-        
+
         # Only authenticate if there's a cookie in the request named @@cookie_name
         unless request.cookies.has_key?(@@cookie_name)
           return finish(@app, env)
         end
-        
+
         # Get the data from the cookie
         begin
           cookie_value = request.cookies[@@cookie_name]
@@ -71,55 +71,55 @@ module Rack
         rescue Exception => e
           auth_fail = e.message
         end
-        
+
         # Do not authenticate if either one of these is set
         # This check is done late so that we'll have already
         # checked the cookie
         if env['AUTH_USER'] || env['AUTH_FAIL']
           return finish(@app, env, cookie_value)
         end
-        
+
         if !auth_fail
           auth_datetime = Time.at(hash_data['AUTH_DATETIME']).utc
           auth_expire_datetime = Time.at(hash_data['AUTH_EXPIRE_DATETIME']).utc
-          
+
           if auth_datetime + @@max_lifetime < Time.now.utc
             auth_fail = "You have been signed out since you signed in more than #{@@max_lifetime/3600} hours ago"
           end
-          
+
           if auth_expire_datetime < Time.now.utc
             auth_fail = "You have been signed out due to inactivity"
           end
         end
-        
+
         if auth_fail
           env['AUTH_FAIL'] = auth_fail
         else
           # Put the values from the hash into the environment
           env['AUTH_USER'] = hash_data['AUTH_USER']
-          
+
           env['AUTH_TYPE'] = hash_data['AUTH_TYPE']
           env['AUTH_TYPE_USER'] = hash_data['AUTH_TYPE_USER']
-          
+
           env['AUTH_TYPE_THIS_REQUEST'] = "Cookie"
-          
+
           env['AUTH_DATETIME'] = auth_datetime
           env['AUTH_EXPIRE_DATETIME'] = auth_expire_datetime
         end
-        
+
         finish(@app, env, cookie_value)
       end
-      
+
       def finish(app, env, cookie_value_from_request = nil)
         status, headers, body = @app.call(env)
-        
+
         # Assume our cookie isn't in the response unless/until we find it
         response_cookie = false
-        
+
         if headers.has_key?("Set-Cookie")
           set_cookie = headers["Set-Cookie"]
           set_cookie_pieces = set_cookie.split(";")
-          
+
           # TODO: parse cookies from header and find @@cookie_name
           set_cookie_pieces.each_with_index do |piece, index|
             if piece[@@cookie_name]
@@ -127,25 +127,25 @@ module Rack
             end
           end
         end
-        
+
         # If the application isn't making any changes to the cookie, we can modify it
         if cookie_value_from_request && !response_cookie
-          
+
           # If authentication succeeded earlier, send back a new token
           if env['AUTH_USER']
             cookie = self.class.create_auth_cookie(env)
-            
+
             if headers["Set-Cookie"]
               headers["Set-Cookie"] << cookie
             else
               headers["Set-Cookie"] = cookie
             end
           end
-          
+
           # If authentication failed earlier, tell the client to clear the cookie
           if env['AUTH_FAIL']
             cookie = self.class.create_clear_cookie(env)
-            
+
             if headers["Set-Cookie"]
               headers["Set-Cookie"] << cookie
             else
@@ -153,19 +153,19 @@ module Rack
             end
           end
         end
-        
+
         [status, headers, body]
       end
-      
+
       def read_cookie(cookie_value)
         # Separate the cookie data and the digest
         raw_data, digest = cookie_value.split("--")
-        
+
         # Check for evidence of tampering
         unless digest == self.class.generate_hmac(raw_data)
           raise "Invalid cookie digest!"
         end
-        
+
         # Unpack the cookie data back to a hash
         begin
           unpacked_data = raw_data.unpack("m*").first
@@ -173,40 +173,40 @@ module Rack
         rescue
           raise "Unable to read cookie!"
         end
-        
+
         hash_data
       end
-      
+
       def self.cookie_name
         @@cookie_name
       end
-      
+
       def self.create_auth_token(env)
         # Copy relevant auth info for storage in a token
         auth_info = Hash.new
-        
+
         auth_info['AUTH_USER'] = env['AUTH_USER']
-        
+
         auth_info['AUTH_TYPE'] = env['AUTH_TYPE'] || "Unknown"
         auth_info['AUTH_TYPE_USER'] = env['AUTH_TYPE_USER'] || env['AUTH_USER']
-        
+
         # Expecting env['AUTH_DATETIME'] to hold an instance of Time
         if env['AUTH_DATETIME']
           auth_info['AUTH_DATETIME'] = env['AUTH_DATETIME'].to_i
         else
           auth_info['AUTH_DATETIME'] = Time.now.utc.to_i
         end
-        
+
         auth_info['AUTH_EXPIRE_DATETIME'] = Time.now.utc.to_i + @@idle_timeout
-        
+
         # Pack the auth_info hash for cookie storage
         json_data = auth_info.to_json
         packed_data = [json_data].pack('m*')
-        
+
         # Add a digest value to cookie_data to prevent tampering
         "#{packed_data}--#{generate_hmac(packed_data)}"
       end
-      
+
       def self.create_auth_cookie(env)
         cookie_value = create_auth_token(env)
         cookie = "#{@@cookie_name}=#{URI.escape(cookie_value)}; "
@@ -214,7 +214,7 @@ module Rack
         cookie += "path=/; "
         cookie += "HttpOnly; "
       end
-      
+
       def self.create_clear_cookie(env)
         cookie_value = ""
         cookie = "#{@@cookie_name}=; "
@@ -223,11 +223,11 @@ module Rack
         cookie += "expires=Thu, 01-Jan-1970 00:00:00 GMT; "
         cookie += "HttpOnly; "
       end
-      
+
       def self.generate_hmac(data)
         OpenSSL::HMAC.hexdigest(OpenSSL::Digest::SHA1.new, @@secret, data)
       end
-      
+
       def self.raw_host_with_port(env)
         if forwarded = env["HTTP_X_FORWARDED_HOST"]
           forwarded.split(/,\s?/).last
@@ -236,24 +236,24 @@ module Rack
             "#{env['SERVER_NAME'] || env['SERVER_ADDR']}:#{env['SERVER_PORT']}"
         end
       end
-      
+
       def self.host(env)
         raw_host_with_port(env).sub(/:\d+$/, '')
       end
-      
+
       def self.cookie_domain(env)
         result = host(env)
-        
+
         if @@domain_tree_depth != nil
           components = result.split('.')
           components.slice!(0, @@domain_tree_depth)
           result = components.join('.')
         end
-        
+
         if @@share_with_subdomains
           result = "." + result
         end
-        
+
         result
       end
     end
