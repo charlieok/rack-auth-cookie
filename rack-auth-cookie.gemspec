@@ -1,4 +1,5 @@
 require 'rubygems'
+require 'bundler'
 
 Gem::Specification.new do |gem|
   gem.name      = 'rack-auth-cookie'
@@ -13,6 +14,7 @@ Gem::Specification.new do |gem|
   gem.extra_rdoc_files = ['CHANGES', 'README', 'MANIFEST']
 
   gem.add_dependency('rack', '>= 1.0.0')
+  gem.add_dependency('json')
   
   gem.description = <<-EOF
     The rack-auth-cookie library provides a Rack middleware interface for
