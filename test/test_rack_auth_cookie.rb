@@ -4,7 +4,8 @@ require 'bundler/setup'
 require 'test/unit'
 require 'rack/auth/cookie'
 
-class TC_Rack_Auth_Cookie < Test::Unit::TestCase
+class TestRackAuthCookie < Test::Unit::TestCase
+
   def setup
     @app  = 1 # Placeholder
     @env  = 1 # Placeholder
