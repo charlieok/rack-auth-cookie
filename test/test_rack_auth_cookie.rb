@@ -1,8 +1,6 @@
 require 'rubygems'
 require 'bundler/setup'
-
 require 'test/unit'
-require 'rack/auth/cookie'
 
 class TestRackAuthCookie < Test::Unit::TestCase
 
@@ -23,4 +21,5 @@ class TestRackAuthCookie < Test::Unit::TestCase
   def teardown
     @rack = nil
   end
+
 end
